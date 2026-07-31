@@ -15,19 +15,18 @@ DISC=$(date +%m%d%H%M); CH="crew-lab-$DISC"; S="crewlab$DISC"
 
 ## 📋 1. Render charter (ไฟล์เดียว จาก template กลาง)
 
-**ตั้งครั้งเดียว** — charter อยู่ใน `ψ/teams/` (ในสายตา vault) แต่ render.sh hardcode `.maw/teams` → symlink คร่อมไว้:
-
-```bash
-ln -s ../ψ/teams .maw/teams        # ครั้งเดียวต่อ repo — charter จริงอยู่ ψ/teams, render.sh ยังเขียน .maw/teams ได้
-```
+charter อยู่ที่ `ψ/teams/` — render.sh เขียนตรงนั้นเองตั้งแต่ **PR#1 merge (`7ae36dc`)** ไม่ต้องตั้งอะไรก่อน
 
 ```bash
 /opt/Code/github.com/Soul-Brews-Studio/crew-master-charters/scripts/render.sh \
   --template squad-2-starter --target "$LAB" \
   --team "$CH" --session "$S" --lead-name crew-lab
-# → เขียน .maw/teams/ (symlink) → โผล่จริงที่ ψ/teams/crew-lab-$DISC.yaml
-# maw team ทุก verb รับ path ตรงได้: maw team preflight ψ/teams/$CH.yaml
+# → ψ/teams/crew-lab-$DISC.yaml   (default; --out-dir DIR ถ้าอยากไปที่อื่น)
+# maw team ทุก verb รับ path ตรง: maw team preflight ψ/teams/$CH.yaml
 ```
+
+> ก่อน `7ae36dc` render.sh เขียนไป `.maw/teams` — repo เก่าที่ยังพึ่ง path นั้นใช้
+> `ln -s ../ψ/teams .maw/teams` คร่อมได้ (crew-lab มี symlink นี้ค้างไว้ ไม่จำเป็นแล้วแต่ไม่เสียหาย)
 
 ## 🌳 2. Worktree — `maw worktree add` ไม่ใช่ git — สร้างอย่างเดียว ไม่ spawn
 
@@ -50,8 +49,8 @@ tmux has-session -t "$S" && echo "session UP"      # verify จริง
 ## 🚦 4. Gate ทีละชั้น (dry-run stops here)
 
 ```bash
-maw team preflight .maw/teams/$CH.yaml              # read-only, ไม่สร้างอะไร
-maw team load .maw/teams/$CH.yaml --no-spawn        # materialize config.json + inbox
+maw team preflight ψ/teams/$CH.yaml              # read-only, ไม่สร้างอะไร
+maw team load ψ/teams/$CH.yaml --no-spawn        # materialize config.json + inbox
 maw team status "$CH"                               # collision check (registry machine-global 180+ teams)
 maw team up "$CH" --only coder-1,coder-2 --dry-run  # --only บังคับ! เว้นไว้จะปลุก lead=ตัวเราเอง
 # ผ่าน = "would fresh wake … / lead skip (selector) / No changes made"
@@ -76,7 +75,7 @@ maw kill "$S"                                        # 1. ฆ่า session
 for n in 1 2; do mv "agents/$CH-codex-$n" "$DEST/"; done   # 2. ย้าย ไม่ลบ
 git worktree prune -v                               # 3. เก็บ gitdir ที่ค้าง
 maw team delete "$CH"                                # 4. ลบ team dir
-ls .maw/teams/$CH.yaml                               # .yaml เก็บไว้เป็น record ✓
+ls ψ/teams/$CH.yaml                               # .yaml เก็บไว้เป็น record ✓
 ```
 
 ## 📨 7. รายงานกลับ lead/oracle อื่น (maw hey)
@@ -165,6 +164,13 @@ gate ตัดสินแค่ "มีสิทธิ์ถูก judge ไห
 | **#11 pool ต่างกัน = model ต่างกัน (confound!)** | pool 1 → `gpt-5.5`, pool 5 → `gpt-5.6-sol` — charter ไม่ได้ระบุ model. 2 crew จาก template เดียวกัน **ไม่ใช่ตัวแปรเดียวกัน** ถ้าจะเทียบผลลัพธ์ต้อง `/model` ให้ตรงกันก่อน แล้ว peek ยืนยัน |
 | **#12 `$X07311034` ถูกอ่านเป็นชื่อตัวแปร** | shell กิน `$X` ต่อด้วยตัวเลขเป็น identifier เดียว → ได้ค่าว่าง ต้อง `${X}07311034` (ตระกูลเดียวกับ `${S}:lead`) |
 | `maw hey` warning `pane runs 'node' not an agent` | **false warning** — pane เป็น agent จริง ข้อความส่งถึงและทำงาน (`/model` ใช้ได้ผ่าน maw hey) อย่าเชื่อ warning นี้ ตรวจด้วย `maw peek` |
+| **#15 TOML nesting ทำ config เป็นหมัน** | `model = "gpt-5.5"` ที่อยู่**หลัง** `[projects."..."]` กลายเป็น `projects.xxx.model` ไม่ใช่ top-level → ไม่มีผลเลย ไฟล์ *ดูถูก* 100%. pool 1 เขียนกฎไว้ในไฟล์ตัวเอง: `# must be before any [table]` |
+| **#16 verify ชนกับ Nothing-is-Deleted** | `down` เก็บ charter เป็น record → `verify` นับเป็น crew ที่ fail ตลอดกาล **สองหลักการของเราเองตีกัน** ต้องให้ verify ข้าม archived record (ไม่มีใน registry + ไม่มี worktree) |
+| **#17 regex เข้มเกิน = รายงานเท็จ** | รับแค่ `xhigh\|high\|medium\|low` แต่ omx มี `default` → รายงาน "engine did not boot" ทั้งที่ปกติ **เกือบ teardown crew ที่แข็งแรงทิ้ง** |
+| **#18 คนละ token บัญชีเดียวกัน** | pool 1 กับ hermes เป็น `codexsomkit@...` ทั้งคู่ md5 ต่างกัน → เทียบ bytes ผ่านแต่**แชร์โควตา** ต้องเทียบ email จาก JWT |
+| **#19 worktree auth เป็น symlink ไม่ใช่สำเนา** | `agents/*/.codex/auth.json -> ~/.codex-team/N/auth.json`. **Nothing-is-Deleted ปกป้องไฟล์ ไม่ได้ปกป้องปลายทางของ symlink** — archive worktree ไม่ใช่ backup ของ credential. เขียนลง worktree auth = ทะลุไปทับ pool. ก่อนเขียนทับ credential ใดๆ: `[ -L "$f" ]` ก่อนเสมอ, backup ด้วย `cp -L`, **verify ด้วย `readlink` ไม่ใช่ md5** (md5 อ่านทะลุ symlink จึงบอก "เหมือนกัน" เสมอแม้ไม่มีสำเนา) |
+| **#20 agent พิมพ์ข้อความ ≠ ส่งถึงใคร** | background agent ต้องเรียก tool หรือเขียนไฟล์ ถ้าสั่งว่า "จบด้วยบรรทัดเหล่านี้" จะได้ผลกลับ 0/5 แล้วเข้าใจผิดว่าเป็นคุณสมบัติของสิ่งที่วัด **deliverable ต้องตรวจได้ด้วย `ls`** |
+| **exit code หายหลัง pipe** | `cmd \| tail` คืน exit ของ `tail` ไม่ใช่ของ `cmd` — วัด `$?` หลัง pipe แล้วได้ 0 ทั้งที่สคริปต์คืน 1 ต้องวัดแยก: `cmd >/dev/null 2>&1; echo $?` |
 
 ---
 
