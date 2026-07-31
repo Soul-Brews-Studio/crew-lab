@@ -1,0 +1,4 @@
+Collected via SendMessage (first collection round), prompt identical to the file-output judges.
+adv1   VERDICT: X               X_FATAL: 2  Y_FATAL: 2
+adv4   VERDICT: BOTH-REJECTED   X_FATAL: 3  Y_FATAL: 3
+adv5   VERDICT: BOTH-REJECTED   X_FATAL: 2  Y_FATAL: 3

@@ -1,0 +1,39 @@
+name: __TEAM_NAME__
+project: __PROJECT__
+session: __SESSION__
+base_branch: __BASE_BRANCH__
+layout: tiled
+goal: "Schema v2 multi-crew squad. Two coders use explicit pool slots, team-scoped worktrees, team-scoped branches, and a unique tmux session. Coders wait for maw hey."
+provenance:
+  schema: "crew-master-charter-v2"
+  template: "templates/squad-multi-v2.yaml"
+  renderer: "crew-master-charters/scripts/render.sh"
+  rendered_when: "session __SESSION__"
+  input_team: "__TEAM_NAME__"
+  input_project: "__PROJECT__"
+  input_session: "__SESSION__"
+  input_base_branch: "__BASE_BRANCH__"
+  input_roles: "__ROLE1__,__ROLE2__"
+  input_engine_keys: "__ENGINE1__,__ENGINE2__"
+  input_pool_slots: "__POOL1__,__POOL2__"
+engines:
+  __ENGINE1__: "bun $HOME/.claude/skills/oracle-team/scripts/codex-setup.ts __POOL1__ && CODEX_HOME=$PWD/.codex OMX_AUTO_UPDATE=0 omx --direct --madmax"
+  __ENGINE2__: "bun $HOME/.claude/skills/oracle-team/scripts/codex-setup.ts __POOL2__ && CODEX_HOME=$PWD/.codex OMX_AUTO_UPDATE=0 omx --direct --madmax"
+members:
+  - role: __ROLE1__
+    name: __TEAM_NAME__-__ROLE1__
+    engine: __ENGINE1__
+    worktree: agents/__TEAM_NAME__-__ROLE1__
+    branch: agents/__TEAM_NAME__-__ROLE1__
+    prompt: "Coder role __ROLE1__. WAIT for maw hey. Work only in agents/__TEAM_NAME__-__ROLE1__. Never touch another member or crew worktree. Keep CODEX_HOME inside this worktree."
+  - role: __ROLE2__
+    name: __TEAM_NAME__-__ROLE2__
+    engine: __ENGINE2__
+    worktree: agents/__TEAM_NAME__-__ROLE2__
+    branch: agents/__TEAM_NAME__-__ROLE2__
+    prompt: "Coder role __ROLE2__. WAIT for maw hey. Work only in agents/__TEAM_NAME__-__ROLE2__. Never touch another member or crew worktree. Keep CODEX_HOME inside this worktree."
+  - role: lead
+    name: __LEAD_NAME__
+    engine: claude
+    worktree: false
+    branch: __BASE_BRANCH__

@@ -1,0 +1,3 @@
+SCORE_X: 7
+SCORE_Y: 9
+VERDICT: Y

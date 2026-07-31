@@ -1,0 +1,2 @@
+A = crew A, commit a2a99db, pool 1, gpt-5.5 xhigh
+B = crew 2, commit 4982a7c, pool 2, gpt-5.6-sol default

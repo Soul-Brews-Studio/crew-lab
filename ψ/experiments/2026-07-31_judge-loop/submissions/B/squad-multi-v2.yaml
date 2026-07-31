@@ -1,0 +1,26 @@
+name: __TEAM_NAME__
+project: __PROJECT__
+session: __SESSION__
+goal: "Isolated two-worker crew. Lead dispatches tasks; workers change only their own worktrees. PR base __BASE_BRANCH__."
+engines:
+  __ENGINE1__: "bun $HOME/.claude/skills/oracle-team/scripts/codex-setup.ts __POOL1__ && CODEX_HOME=$PWD/.codex OMX_AUTO_UPDATE=0 omx --direct --madmax"
+  __ENGINE2__: "bun $HOME/.claude/skills/oracle-team/scripts/codex-setup.ts __POOL2__ && CODEX_HOME=$PWD/.codex OMX_AUTO_UPDATE=0 omx --direct --madmax"
+members:
+  - role: worker-1
+    name: __TEAM_NAME__-worker-1
+    engine: __ENGINE1__
+    worktree: agents/__TEAM_NAME__-worker-1
+    branch: agents/__TEAM_NAME__-worker-1
+    prompt: "WAIT for a task. Work only in this worktree; never touch another crew or member worktree."
+  - role: worker-2
+    name: __TEAM_NAME__-worker-2
+    engine: __ENGINE2__
+    worktree: agents/__TEAM_NAME__-worker-2
+    branch: agents/__TEAM_NAME__-worker-2
+    prompt: "WAIT for a task. Work only in this worktree; never touch another crew or member worktree."
+  - role: lead
+    name: __LEAD_NAME__
+    engine: claude
+    worktree: false
+    branch: __BASE_BRANCH__
+provenance: "schema=crew-charter-v2; source=templates/squad-multi-v2.yaml; renderer=scripts/render.sh; rendered_at=__SESSION__; input.team=__TEAM_NAME__; input.project=__PROJECT__; input.session=__SESSION__; input.base=__BASE_BRANCH__; input.lead=__LEAD_NAME__; input.pools=__POOL1__,__POOL2__"
