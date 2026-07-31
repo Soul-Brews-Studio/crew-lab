@@ -15,11 +15,18 @@ DISC=$(date +%m%d%H%M); CH="crew-lab-$DISC"; S="crewlab$DISC"
 
 ## 📋 1. Render charter (ไฟล์เดียว จาก template กลาง)
 
+**ตั้งครั้งเดียว** — charter อยู่ใน `ψ/teams/` (ในสายตา vault) แต่ render.sh hardcode `.maw/teams` → symlink คร่อมไว้:
+
+```bash
+ln -s ../ψ/teams .maw/teams        # ครั้งเดียวต่อ repo — charter จริงอยู่ ψ/teams, render.sh ยังเขียน .maw/teams ได้
+```
+
 ```bash
 /opt/Code/github.com/Soul-Brews-Studio/crew-master-charters/scripts/render.sh \
   --template squad-2-starter --target "$LAB" \
   --team "$CH" --session "$S" --lead-name crew-lab
-# → .maw/teams/crew-lab-$DISC.yaml  (lead=claude worktree:false + 2 coders omx)
+# → เขียน .maw/teams/ (symlink) → โผล่จริงที่ ψ/teams/crew-lab-$DISC.yaml
+# maw team ทุก verb รับ path ตรงได้: maw team preflight ψ/teams/$CH.yaml
 ```
 
 ## 🌳 2. Worktree — `maw worktree add` ไม่ใช่ git — สร้างอย่างเดียว ไม่ spawn

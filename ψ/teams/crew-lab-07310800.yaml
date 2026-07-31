@@ -1,0 +1,25 @@
+name: crew-lab-07310800
+project: Soul-Brews-Studio/crew-lab
+session: crewlab07310800
+goal: "Starter squad. Two coders own disjoint scope, lead dispatches via maw hey. Coders WAIT for a task. PR base main. Diff budget 250 lines."
+engines:
+  omx-1: "bun $HOME/.claude/skills/oracle-team/scripts/codex-setup.ts 1 && CODEX_HOME=$PWD/.codex OMX_AUTO_UPDATE=0 omx --direct --madmax"
+  omx-2: "bun $HOME/.claude/skills/oracle-team/scripts/codex-setup.ts 2 && CODEX_HOME=$PWD/.codex OMX_AUTO_UPDATE=0 omx --direct --madmax"
+members:
+  - role: coder-1
+    name: crew-lab-07310800-codex-1
+    engine: omx-1
+    worktree: agents/crew-lab-07310800-codex-1
+    branch: agents/crew-lab-07310800-codex-1
+    prompt: "WAIT for maw hey with task details. Work only in your own worktree. Never touch another member's files."
+  - role: coder-2
+    name: crew-lab-07310800-codex-2
+    engine: omx-2
+    worktree: agents/crew-lab-07310800-codex-2
+    branch: agents/crew-lab-07310800-codex-2
+    prompt: "WAIT for maw hey with task details. Work only in your own worktree. Never touch another member's files."
+  - role: lead
+    name: crew-lab
+    engine: claude
+    worktree: false
+    branch: main
