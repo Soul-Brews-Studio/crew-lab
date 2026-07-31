@@ -88,6 +88,54 @@ maw hey crew-master "crew-lab รายงาน: flow ผ่านครบ ...
 
 maw auto-sign `[host:handle]` (`[m5:crew-lab]`) ให้เอง — **ห้ามขึ้นต้นข้อความด้วย `[…]` เอง** (สงวนให้ signed transport prefix)
 
+## 👥 8. หลาย crew ขนานกัน (multi-crew) — pool ต้องระบุตรงๆ
+
+`squad-solo-buddy` = 1 coder + lead (เล็กสุด) เหมาะกับ tournament ที่ต้องการ "1 คำตอบ ต่อ 1 crew"
+
+```bash
+DISC=$(date +%m%d%H%M)
+declare -A POOL=( [A]=1 [B]=5 )          # ระบุตรงๆ ห้ามคำนวณ — slot ไม่เรียงเลข!
+for X in A B; do
+  CH="crew-lab-j${X}${DISC}"; S="crewlabj$(echo $X|tr A-Z a-z)$DISC"; P=${POOL[$X]}
+  $RS --template squad-solo-buddy --target "$LAB" --team "$CH" --session "$S" --lead-name crew-lab
+  sed -i '' "s|codex-setup\.ts 1 |codex-setup.ts $P |" "ψ/teams/$CH.yaml"   # template hardcode 1 เสมอ
+  maw worktree add "${CH}-buddy" --base main
+  ( cd "agents/${CH}-buddy" && bun $HOME/.claude/skills/oracle-team/scripts/codex-setup.ts $P )
+  printf '\n[projects."%s"]\ntrust_level = "trusted"\n' "$LAB/agents/${CH}-buddy" >> "agents/${CH}-buddy/.codex/config.toml"
+  maw new "$S" --path "$LAB" --shell --no-attach
+done
+# ตรวจ pool แยกจริง — ทีละไฟล์ อย่าเชื่อ grep รวม
+for X in A B; do grep -o 'codex-setup\.ts [0-9]*' "ψ/teams/crew-lab-j${X}${DISC}.yaml"; done
+```
+
+เช็ค slot ที่ **มีจริง** ก่อนเสมอ (เครื่องนี้มี 1,2,5,6 — ไม่มี 3,4):
+
+```bash
+ls -d ~/.codex-team/*/          # slot ที่มีจริง
+cat ~/.codex-team/.usage-cache.json | head -20   # quota เหลือเท่าไหร่
+uptime; sysctl -n hw.ncpu       # load/core ก่อน spawn (เคยมี CPU incident)
+```
+
+## 🚧 9. Gate = script ห้ามเป็น agent
+
+หลักการ: **ถ้าเขียนเป็น script ได้ ห้ามใช้ agent** — agent ให้อภัย script ไม่ให้อภัย
+gate ตัดสินแค่ "มีสิทธิ์ถูก judge ไหม" ไม่ใช่ "ดีไหม"
+
+```bash
+./scripts/gate-schema-v2.sh <worktree>   # exit 0 = eligible, 1 = REJECT <reason>
+```
+
+**ต้องทดสอบ gate ก่อนใช้ — ทั้ง reject และ pass**:
+
+```bash
+./scripts/gate-schema-v2.sh /tmp/nonexistent   # → REJECT G0
+./scripts/gate-schema-v2.sh /tmp/empty-dir     # → REJECT G1
+./scripts/gate-schema-v2.sh /tmp/gate-ref      # → PASS  ← ถ้าไม่มีอะไรผ่านได้เลย = tournament โกง
+```
+
+⚠️ ระวัง gate ที่ **ขัดกันเอง**: "ห้ามมี `__PLACEHOLDER__` เหลือ" + "pool ต้อง parameterize"
+→ ใช้ `__POOL1__` ไม่ได้ (render.sh ไม่ substitute) ต้องใช้ `${CREW_POOL_1:-1}` แทน
+
 ## ⚡ ลัด
 
 | ทำอะไร | คำสั่ง |
@@ -112,6 +160,11 @@ maw auto-sign `[host:handle]` (`[m5:crew-lab]`) ให้เอง — **ห้�
 | `${S}:lead` ไม่มีวงเล็บปีกกา | zsh กิน `:l` เป็น modifier — ต้อง `${S}:lead` |
 | `git worktree prune` เตือน `gitdir points to non-existent` | ปกติ — เพราะ mv worktree ออกไปแล้ว prune เก็บ pointer ที่ค้างให้ |
 | `maw hey` → `bracket-prefixed hey text is reserved` | ห้ามขึ้นต้นข้อความด้วย `[…]` — maw เติม `[host:handle]` sign ให้เอง |
+| **#9 POOL COLLISION ข้าม crew — gate เขียวแต่ชนจริง** | template hardcode `codex-setup.ts 1` **ทุก charter** → 2 crew แชร์ credential/quota. **preflight จับไม่ได้** เพราะเช็คแค่ว่า CODEX_HOME *path* ต่างกัน (ต่างจริง) ไม่ได้เช็ค pool index → *proxy check: วัดสิ่งที่ใกล้เคียง แล้วนึกว่าวัดสิ่งที่สนใจ*. ต้อง `sed` charter ระบุ pool เอง |
+| **#10 pool slot ไม่เรียงเลข** | เครื่องนี้มี 1,2,5,6 **ไม่มี 3,4** — ห้ามคำนวณ `base+n` ต้องระบุเป็น list. (`omx-3` resolve ผ่านทั้งที่ slot 3 ไม่มีจริง — resolve ผ่าน ≠ ใช้ได้) |
+| **#11 pool ต่างกัน = model ต่างกัน (confound!)** | pool 1 → `gpt-5.5`, pool 5 → `gpt-5.6-sol` — charter ไม่ได้ระบุ model. 2 crew จาก template เดียวกัน **ไม่ใช่ตัวแปรเดียวกัน** ถ้าจะเทียบผลลัพธ์ต้อง `/model` ให้ตรงกันก่อน แล้ว peek ยืนยัน |
+| **#12 `$X07311034` ถูกอ่านเป็นชื่อตัวแปร** | shell กิน `$X` ต่อด้วยตัวเลขเป็น identifier เดียว → ได้ค่าว่าง ต้อง `${X}07311034` (ตระกูลเดียวกับ `${S}:lead`) |
+| `maw hey` warning `pane runs 'node' not an agent` | **false warning** — pane เป็น agent จริง ข้อความส่งถึงและทำงาน (`/model` ใช้ได้ผ่าน maw hey) อย่าเชื่อ warning นี้ ตรวจด้วย `maw peek` |
 
 ---
 
