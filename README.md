@@ -75,6 +75,19 @@ Two things that cost time when writing a maw plugin:
 - maw **executes** the entry file rather than importing it, so a bare `export default` never
   runs. An `import.meta.main` block is what actually serves the command.
 
+## Known state of this machine's credential pools
+
+`~/.codex-team/2` and `~/.codex-team/5` currently hold **byte-identical credentials**
+(both `10d36937`, after a `cp` followed a symlink into slot 5 on 2026-07-31). The
+original slot-5 account is not recoverable from disk and needs a fresh `codex login`.
+
+Until then, `--pools 1,5` is correct at the render layer and still lands two crews on
+one account. `maw crew-lab verify` catches it — the point of checking credentials
+pairwise rather than one at a time.
+
+Slot 1 and `hermes` are also the same account with different tokens: different bytes,
+one quota.
+
 ## Requirements
 
 - `maw` with the `team` and `worktree` verbs

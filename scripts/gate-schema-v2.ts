@@ -109,7 +109,37 @@ async function gate(worktree: string): Promise<string> {
     if (!/^\s*(provenance|origin|rendered_from|source):/im.test(charter))
       reject("G7", "rendered charter declares no provenance field");
 
-    return `spec=${specLines}L template=${tplLines}L charter=${basename(charterPath!)}`;
+    // ── G9 two crews from one template must not collide ───────────────
+    // The whole point of v2 is several crews in one repo. If two renders produce
+    // a member with the same name, they are not separable — and a template can
+    // state "every name derives from the team" while its lead quietly does not.
+    // That is checkable by rendering twice, so it is a gate, not a judgement.
+    const names = async (team: string, session: string): Promise<string[]> => {
+      const rr = await $`${RENDER} --template ${stageName} --target ${scratch} --team ${team} --session ${session} --lead-name repo`
+        .quiet()
+        .nothrow();
+      if (rr.exitCode !== 0)
+        reject("G9", `render failed for team '${team}' — ${rr.stderr.toString().trim().split("\n").slice(-1)[0]}`);
+      const p = rr.stdout.toString().match(/^wrote:\s*(.+)$/m)?.[1]?.trim();
+      if (!p) reject("G9", `render wrote no charter for team '${team}'`);
+      const body = await Bun.file(p!).text();
+      return [...body.matchAll(/^\s+name:\s*(.+)$/gm)].map((m) => m[1].trim());
+    };
+
+    // Same --lead-name for both, which is the realistic case: an operator names
+    // the lead after the repo, not per crew.
+    const a = await names("crewalpha", "crewalpha");
+    const b = await names("crewbeta", "crewbeta");
+    const collisions = a.filter((n) => b.includes(n));
+    if (collisions.length)
+      reject(
+        "G9",
+        `two crews rendered from this template share member name(s): ${[...new Set(collisions)].join(", ")}. ` +
+          `Rendered as team 'crewalpha' and 'crewbeta' with the same --lead-name repo. ` +
+          `Every member name must derive from the team name — including the lead.`,
+      );
+
+    return `spec=${specLines}L template=${tplLines}L charter=${basename(charterPath!)} members=${a.length} no-collision`;
   } finally {
     await $`rm -f ${staged}`.quiet().nothrow();
   }

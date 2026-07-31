@@ -1,0 +1,35 @@
+name: __TEAM_NAME__
+project: __PROJECT__
+session: __SESSION__
+base_branch: __BASE_BRANCH__
+goal: "Multi-crew squad. Each member owns one worktree and one credential slot. Coders wait for dispatch."
+provenance:
+  template: squad-multi-v2
+  team: __TEAM_NAME__
+  project: __PROJECT__
+  session: __SESSION__
+  base_branch: __BASE_BRANCH__
+  engine_keys: __ENGINE1__,__ENGINE2__
+  pool_slots: __POOL1__,__POOL2__
+engines:
+  __ENGINE1__: "bun $HOME/.claude/skills/oracle-team/scripts/codex-setup.ts __POOL1__ && CODEX_HOME=$PWD/.codex OMX_AUTO_UPDATE=0 omx --direct --madmax"
+  __ENGINE2__: "bun $HOME/.claude/skills/oracle-team/scripts/codex-setup.ts __POOL2__ && CODEX_HOME=$PWD/.codex OMX_AUTO_UPDATE=0 omx --direct --madmax"
+members:
+  - role: coder-1
+    name: __TEAM_NAME__-coder-1
+    engine: __ENGINE1__
+    worktree: agents/__TEAM_NAME__-coder-1
+    branch: agents/__TEAM_NAME__-coder-1
+    prompt: "Wait for dispatch. Work only inside your own worktree. Never touch another member or another crew."
+  - role: coder-2
+    name: __TEAM_NAME__-coder-2
+    engine: __ENGINE2__
+    worktree: agents/__TEAM_NAME__-coder-2
+    branch: agents/__TEAM_NAME__-coder-2
+    prompt: "Wait for dispatch. Work only inside your own worktree. Never touch another member or another crew."
+  - role: lead
+    name: __TEAM_NAME__-lead
+    engine: claude
+    worktree: false
+    branch: __BASE_BRANCH__
+    prompt: "Dispatch work to the coders and gate their output. Own no worktree; stay on the base branch."
