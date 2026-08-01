@@ -80,6 +80,14 @@ one. Confirmed three independent ways:
 This is the whole point: DOM scraping sees only the rendered thread; the socket
 sees all of them.
 
+## Realtime only — no history on the socket
+
+The socket carries **realtime deltas, not history**. Measured: opened a thread
+with 15 rendered messages, captured 16 s, got **0** `insertMessage` events.
+Existing messages load over GraphQL/HTTP, not Lightspeed. A mirror therefore needs
+**two sources** — the socket for realtime (all threads, proven) and a DOM/GraphQL
+backfill for existing history — so message rows should carry a `source` column.
+
 ## Silent frame loss — found and fixed
 
 The original header-agnostic parser (`JSON.parse` the whole remainder, `return
@@ -96,8 +104,16 @@ The dropped 8, by what followed the first document:
 So "the trailing is always a fixed 6-byte trailer, nothing to split" is **false**:
 at least one frame genuinely packs a second document. None of the 8 first-docs
 were `insertMessage`, so message extraction was not affected — but a parser that
-takes only the first document per frame does lose real data. Open question: has a
-`insertMessage` ever appeared in a trailing document? Not seen yet; not disproven.
+takes only the first document per frame does lose real data. The sniffer now
+parses every document per frame (`extractDocuments`, v26.8.1.1200).
+
+**Open — not closed:** has an `insertMessage` ever ridden in a trailing document?
+A 510-frame multi-document re-capture across 3 loads found **0** multi-doc frames,
+so there was nothing to search — not disproven. Multi-doc frames are rare (~0.5%
+in one window, 0% in another) and no capture has yet held both a multi-doc frame
+*and* message traffic. Answering it needs a long passive capture that happens to
+catch a packed frame while messages flow — wall-clock, not analysis. Left labelled
+open rather than closed on absent evidence.
 
 ## Files
 
