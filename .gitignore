@@ -1,3 +1,7 @@
 ψ/lab/fbchat/frames.jsonl
 ψ/lab/fbchat/frames-v2.jsonl
 ψ/memory/mailbox/
+.DS_Store
+ψ/inbox/
+ψ/teams/*.yaml
+plugins/*/ψ/
