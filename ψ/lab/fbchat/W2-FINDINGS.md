@@ -24,13 +24,16 @@ New messages in this capture are the sync-transaction frames containing:
 The canonical message row is `insertMessage`:
 
 ```text
-[5,"insertMessage", text, _, _, threadId, _, timestamp, timestamp, _, messageId, otid, sender, ...]
+[5,"insertMessage", text, _, _, threadId, _, ts, ts, _, messageId, id2, sender, ...]
 ```
 
 Mapped fields (args are zero-based after `"insertMessage"`):
 
 - `text`: arg `0`; if null, fall back to matching `setMessageDisplayedContentTypes(threadId, messageId, timestamp, text, ...)`.
 - `threadId`: arg `3` (`[19,"..."]`).
+- `ts`: arg `5` (`[19,"..."]`), with arg `6` observed as an identical duplicate in all 8 `insertMessage` events.
+- `messageId`: arg `8`; values start with `mid.$`.
+- `id2`: arg `9`; second message/server id.
 - `sender`: arg `10` (`[19,"..."]`); fallback observed in `updateParticipantLastMessageSendTimestamp(threadId, sender, timestamp)` / `updateReadReceipt(timestamp, threadId, sender, ...)`.
 - `type`: normalized to `"new-message"` for these `insertMessage` events.
 
@@ -39,6 +42,9 @@ Mapped fields (args are zero-based after `"insertMessage"`):
 Thread `830628859896062` is visible in the dump while `renderedThread` remains `2020188088851429`, confirming all-thread sync frames. The actual new message is line 213:
 
 - `insertMessage` threadId = `830628859896062`
+- `insertMessage` ts = `1785559412769` (frame `at` = `1785559412895`, delta -126 ms)
+- `insertMessage` messageId = `mid.$gAALzc9oiYP6l7Oe4IWfu6Ju4wazd`
+- `insertMessage` id2 = `7489178985880988893`
 - sender = `896050346`
 - text = `W3 coverage test 🔮 — ส่งจาก Browser Oracle ครับ กำลังทดสอบว่า socket ของอีกห้องเห็นข้อความนี้ไหม (AI generated, Rule 6)`
 

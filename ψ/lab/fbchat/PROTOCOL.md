@@ -45,9 +45,18 @@ New messages are `insertMessage` steps inside
 `executeFirstBlockForSyncTransaction` / `Finally` sync transactions. Argument map:
 
 ```
-insertMessage:  text = arg0,  threadId = arg3,  sender = arg10
+insertMessage:  text = arg0,  threadId = arg3,  sender = arg10,
+                ts = arg5 (epoch-ms; arg6 is an identical fallback),
+                messageId = arg8 (mid.$…),  id2 = arg9
                 (setMessageDisplayedContentTypes as a text fallback)
 ```
+
+`ts` is the real send time, not capture time — verified: the thread-B test
+message carries `ts=1785559412769` = 2026-08-01 11:43:32, −126 ms from the
+frame's own `at`. arg5 and arg6 were identical across all 8 events. Indices
+independently confirmed two ways: browser-oracle dumped the raw 81-arg node, and
+the extractor was gated to reject any index whose value wasn't a 2026 epoch-ms /
+a `mid.$`-shaped id.
 
 `[19,"X"]` is a **generic value opcode, not a thread id** — extracting every
 `[19,…]` yields 1949 junk "threads" (incl. `-1`, `-28`). Thread id is specifically

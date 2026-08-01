@@ -8,6 +8,9 @@ type Event = {
   sender: string | null;
   text: string | null;
   type: "new-message";
+  ts: number | null;
+  messageId: string | null;
+  id2: string | null;
 };
 
 const input = Bun.argv[2] ?? "frames.jsonl";
@@ -26,6 +29,19 @@ function stringAtom(v: Json | undefined): string | null {
 function nonEmptyString(v: Json | undefined): string | null {
   const s = stringAtom(v);
   return s && s.length > 0 ? s : null;
+}
+
+function epochMsAtom(v: Json | undefined): number | null {
+  const decoded = atom(v);
+  const n =
+    typeof decoded === "number"
+      ? decoded
+      : typeof decoded === "string" && /^\d{13}$/.test(decoded)
+        ? Number(decoded)
+        : NaN;
+  return Number.isSafeInteger(n) && n >= 1_000_000_000_000 && n < 10_000_000_000_000
+    ? n
+    : null;
 }
 
 function parsePayload(frame: any): Json | null {
@@ -108,12 +124,14 @@ function eventsFromFrame(frame: any): Event[] {
     if (c.op !== "insertMessage") continue; // new-message; upsertMessage/deleteThenInsertMessage are backfill/reload in this dump.
 
     const threadId = stringAtom(c.args[3]);
-    const timestamp = stringAtom(c.args[5]);
+    const timestamp = stringAtom(c.args[5]) ?? stringAtom(c.args[6]);
+    const ts = epochMsAtom(c.args[5]) ?? epochMsAtom(c.args[6]);
     const messageId = stringAtom(c.args[8]);
+    const id2 = stringAtom(c.args[9]);
     const text = nonEmptyString(c.args[0]) ?? display.get(key(threadId, messageId, timestamp)) ?? null;
     const sender = stringAtom(c.args[10]) ?? senderFallback(calls, threadId, timestamp);
 
-    events.push({ threadId, sender, text, type: "new-message" });
+    events.push({ threadId, sender, text, type: "new-message", ts, messageId, id2 });
   }
   return events;
 }
