@@ -5,7 +5,29 @@
 
 ---
 
-## 🐾 0. ทั้งหมดมี 4 verb
+## 🎯 0. ONE SHOT — lab 1 agent + shell ขวา, gate ครบ
+
+```bash
+./scripts/lab-up.sh diggerlab 2       # <name> <pool>
+```
+
+```
+OK  session=crewdiggerlabc108021637  window=diggerlab-c108021637-buddy  model=gpt-5.5 xhigh
+    pane 0 node x=0 active=1      ← agent ซ้าย (active — maw hey ตกที่นี่)
+    pane 1 zsh  x=65 active=0     ← shell ขวา
+```
+
+ทำให้ครบใน 1 คำสั่ง: spawn → verify pool/model → ลบ window `lead` ที่ว่าง → split shell ขวา → ดัน agent เป็น active → **gate 3 ชั้น**
+
+gate ที่พิสูจน์แล้วว่า **reject ของจริงได้** (ลอง `maw split` ให้พังดู → `panes 2→3`, `model → NONE` ทั้งคู่หยุดสคริปต์):
+
+| gate | ต้องได้ | พังแปลว่า |
+|---|---|---|
+| model จาก `crew status` | `gpt-...` | ชื่อ window เสีย maw หา agent ไม่เจอ |
+| จำนวน pane | 2 | มีอะไรแอบเพิ่ม |
+| จำนวน engine | 1 | มี engine ซ้อน (maw split สืบทอดคำสั่ง) |
+
+## 🐾 1. ทั้งหมดมี 4 verb
 
 ```bash
 maw crew up <name> --pools 1,2   # render → worktree → session → gate → spawn
@@ -184,6 +206,9 @@ tmux break-pane -s %7203 -n "$W"
 | `tmux ...-t "${S}:win.pane"` เงียบ ไม่ทำงาน | ใช้ `#{pane_id}` (`%7215`) แทน index |
 | maw hey warning "not an agent" เตือนทั้งตอนส่งผิด (zsh) และส่งถูก (node) | warning นี้แยกแยะไม่ได้ — `maw peek` ดูของจริงเสมอ |
 | `maw crew up` ขึ้น "spawn reported failure" | ปกติ — false negative, plugin poll ต่อเอง (maw-rs#751) |
+| **`maw crew` ในสคริปต์ = "not inside a maw-visible repository"** ทั้งที่ PWD ถูก | `source ~/.zshrc` ต้นสคริปต์ — PATH แบบ non-interactive ทำให้พัง (maw/bun/git/tmux resolve เหมือนกันหมด แต่ยังพัง) |
+| `set -e` + `[ -z A ] \|\| [ -z B ] && { exit 2; }` | guard เป็นเท็จ → compound rc=1 → สคริปต์ **ตายเงียบ ไม่มี output เลย** ใช้ `if ... then ... fi` |
+| ถาม agent ว่า "login ด้วย account ไหน" | มันจะไปไล่ grep `TOKEN\|KEY\|SECRET` ใน `~/.codex/` — ถาม `maw crew verify` แทน |
 
 ---
 
