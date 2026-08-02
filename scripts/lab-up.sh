@@ -9,12 +9,19 @@
 NAME="$1"; POOL="$2"
 if [ -z "$NAME" ] || [ -z "$POOL" ]; then echo "usage: $0 <name> <pool>"; exit 2; fi
 
-# `maw crew` fails with "not inside a maw-visible repository" when the script's
-# PATH is the bare non-interactive one, even though PWD is correct and maw/bun/
-# git/tmux all resolve to the same binaries. Sourcing the interactive profile
-# restores whatever it needs. Verified deterministically: plain script fails,
-# same script with the interactive PATH passes, plain fails again.
-[ -f "$HOME/.zshrc" ] && source "$HOME/.zshrc" >/dev/null 2>&1
+# There are TWO maw binaries on this machine:
+#   ~/.local/bin/maw  = maw-rs v26.7.28  — HAS the `worktree` verb
+#   ~/.bun/bin/maw    = maw-js v26.5.21  — does NOT
+# ~/.zshenv:2 prepends .bun/bin before .local/bin, so any script picks maw-js.
+# The crew plugin's labRoot() resolves the repo with `maw worktree ls`; under
+# maw-js that is an unknown command, stdout is empty, the parse yields undefined
+# and it dies "not inside a maw-visible repository" — which says nothing about
+# the real problem. Interactive shells only work by accident: a later line in
+# ~/.zshrc re-prepends .local/bin, and the last prepend wins.
+export PATH="$HOME/.local/bin:$PATH"
+if ! maw worktree ls >/dev/null 2>&1; then
+  echo "FAIL: 'maw worktree ls' unavailable — wrong maw on PATH ($(command -v maw))"; exit 1
+fi
 
 # 1. spawn + verify — anything but VERIFIED means DO NOT proceed
 maw crew up "$NAME" --pools "$POOL" > /tmp/oneshot-up.txt 2>&1

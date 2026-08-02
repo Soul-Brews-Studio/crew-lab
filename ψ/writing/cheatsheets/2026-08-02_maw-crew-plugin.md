@@ -206,7 +206,9 @@ tmux break-pane -s %7203 -n "$W"
 | `tmux ...-t "${S}:win.pane"` เงียบ ไม่ทำงาน | ใช้ `#{pane_id}` (`%7215`) แทน index |
 | maw hey warning "not an agent" เตือนทั้งตอนส่งผิด (zsh) และส่งถูก (node) | warning นี้แยกแยะไม่ได้ — `maw peek` ดูของจริงเสมอ |
 | `maw crew up` ขึ้น "spawn reported failure" | ปกติ — false negative, plugin poll ต่อเอง (maw-rs#751) |
-| **`maw crew` ในสคริปต์ = "not inside a maw-visible repository"** ทั้งที่ PWD ถูก | `source ~/.zshrc` ต้นสคริปต์ — PATH แบบ non-interactive ทำให้พัง (maw/bun/git/tmux resolve เหมือนกันหมด แต่ยังพัง) |
+| **`maw crew` ในสคริปต์ = "not inside a maw-visible repository"** ทั้งที่ PWD ถูก | มี maw **2 ตัว**: `~/.local/bin/maw`=maw-rs (มี `worktree`) กับ `~/.bun/bin/maw`=maw-js (ไม่มี). `~/.zshenv:2` วาง .bun/bin ก่อน → สคริปต์ได้ตัวผิด. ใส่ `export PATH="$HOME/.local/bin:$PATH"` แล้ว guard ด้วย `maw worktree ls` |
+| interactive ใช้ได้ แต่ script ไม่ได้ | **เป็นความบังเอิญ** — บรรทัดท้ายๆ ใน `~/.zshrc` (Antigravity installer) prepend `.local/bin` ทีหลัง ตัวหลังชนะ ถ้าลบบรรทัดนั้น interactive พังด้วย |
+| error เดียวกันมาจาก 2 สาเหตุ | `labRoot()` เดาความล้มเหลวจาก stdout ว่าง + `.nothrow()` ทิ้ง exitCode → **maw ผิดตัว** กับ **PWD ผิด** ให้ข้อความเดียวกันเป๊ะ แยกไม่ออก |
 | `set -e` + `[ -z A ] \|\| [ -z B ] && { exit 2; }` | guard เป็นเท็จ → compound rc=1 → สคริปต์ **ตายเงียบ ไม่มี output เลย** ใช้ `if ... then ... fi` |
 | ถาม agent ว่า "login ด้วย account ไหน" | มันจะไปไล่ grep `TOKEN\|KEY\|SECRET` ใน `~/.codex/` — ถาม `maw crew verify` แทน |
 
