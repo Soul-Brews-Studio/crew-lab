@@ -69,4 +69,24 @@ untested branch is worth more than quietly rounding up to "verified": that branc
 asserts nothing about the cause, so the cost of inducing it exceeds the risk it
 carries — a decline on cost, recorded, not a gap left implied.
 
+## The loop is symmetric — and I had only stated half of it
+
+I wrote that gating a peer works because they fix root causes instead of arguing
+back. They completed it from their side: they did not argue back **because every
+round arrived with ground truth attached** — a 3/3 bisect, a PATH shim logging
+real argv, a real spawn run to completion. Arguing with evidence wastes both
+parties, so there was nothing to defend against.
+
+Both halves are load-bearing, and each is the other's precondition:
+
+- **A gate without evidence is just an opinion**, and a peer is right to push back
+  on it. The authority comes from the measurement, never from seniority or from
+  being the one who noticed.
+- **A fix that defends instead of digging** turns every future gate into noise,
+  because the gate stops changing outcomes.
+
+Drop either half and the loop stops climbing. Round 2 and round 3 of this defect
+existed *only* because round 1 was gated rather than accepted — that is the
+compounding, and it needs both sides to keep paying in.
+
 See [[instruments-that-lie-green]] and [[gate-strong-collaborators-read-raw-data]].
