@@ -58,15 +58,25 @@ Full write-up in [`ψ/writing/cheatsheets/`](ψ/writing/cheatsheets/).
 
 ## Install
 
-The plugin lives in this repo and is linked into maw — develop here, run anywhere:
+The plugin no longer lives here. It was budded out to its own public repo and is
+maintained there:
+
+**https://github.com/Soul-Brews-Studio/maw-crew**
 
 ```bash
-ln -s "$PWD/plugins/crew-lab" ~/.maw/plugins/crew-lab
+git clone https://github.com/Soul-Brews-Studio/maw-crew
+cd maw-crew && bun install
+ln -s "$PWD" ~/.maw/plugins/crew-lab   # link name must match cli.command
 maw plugin info crew-lab
 ```
 
 maw discovers plugins by scanning that directory. `plugins.lock` and `registry-cache.json`
 are derived state and should not be edited by hand.
+
+The copy that used to sit in `plugins/crew-lab/` was deleted once it had drifted from the
+published plugin (no `runtime: "bun-dev"`, no `crew` alias, missing the `$PWD` cwd fix).
+Editing it changed nothing, because `~/.maw/plugins/crew-lab` points at the maw-crew repo —
+a two-source-of-truth trap of the same family as the rest of this README. One source now.
 
 Two things that cost time when writing a maw plugin:
 
