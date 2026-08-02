@@ -5,14 +5,16 @@ and a `maw` plugin that encodes what went wrong while doing it.
 
 Every guard in this repo exists because it was hit for real, then reproduced.
 
-## `maw crew-lab`
+## `maw crew`
 
 ```bash
-maw crew-lab up <name> --pools 1,5      # render → worktrees → sessions → gates → spawn
-maw crew-lab verify <prefix>            # prove isolation from ground truth (exit 1 = do not dispatch)
-maw crew-lab status [prefix]            # real state, read from tmux
-maw crew-lab down <prefix>              # Nothing-is-Deleted teardown
+maw crew up <name> --pools 1,5      # render → worktrees → sessions → gates → spawn
+maw crew verify <prefix>            # prove isolation from ground truth (exit 1 = do not dispatch)
+maw crew status [prefix]            # real state, read from tmux
+maw crew down <prefix>              # Nothing-is-Deleted teardown
 ```
+
+Formerly `maw crew-lab`, which still works as an alias.
 
 ### Why `verify` exists
 
@@ -66,17 +68,25 @@ maintained there:
 ```bash
 git clone https://github.com/Soul-Brews-Studio/maw-crew
 cd maw-crew && bun install
-ln -s "$PWD" ~/.maw/plugins/crew-lab   # link name must match cli.command
-maw plugin info crew-lab
+ln -s "$PWD" ~/.maw/plugins/crew   # link name must match cli.command
+maw plugin info crew
 ```
 
 maw discovers plugins by scanning that directory. `plugins.lock` and `registry-cache.json`
 are derived state and should not be edited by hand.
 
+The command is `maw crew` as of maw-crew `894f2d5`; `maw crew-lab` still works as a
+back-compat alias. The alias comes from `cli.aliases` — **not** a second symlink, which
+would double-register the plugin. So `maw plugin info crew-lab` returns not found while
+`maw crew-lab` runs fine: an alias is a command name, not a registered directory.
+
 The copy that used to sit in `plugins/crew-lab/` was deleted once it had drifted from the
 published plugin (no `runtime: "bun-dev"`, no `crew` alias, missing the `$PWD` cwd fix).
-Editing it changed nothing, because `~/.maw/plugins/crew-lab` points at the maw-crew repo —
-a two-source-of-truth trap of the same family as the rest of this README. One source now.
+Editing it changed nothing, because the link in `~/.maw/plugins/` points at the maw-crew
+repo — a two-source-of-truth trap of the same family as the rest of this README. One source
+now. (This very block drifted within the hour: it was written naming the old link name and
+went stale the moment the rename landed. Pointing at another repo does not exempt you from
+its changes.)
 
 Two things that cost time when writing a maw plugin:
 
@@ -92,7 +102,7 @@ Two things that cost time when writing a maw plugin:
 original slot-5 account is not recoverable from disk and needs a fresh `codex login`.
 
 Until then, `--pools 1,5` is correct at the render layer and still lands two crews on
-one account. `maw crew-lab verify` catches it — the point of checking credentials
+one account. `maw crew verify` catches it — the point of checking credentials
 pairwise rather than one at a time.
 
 Slot 1 and `hermes` are also the same account with different tokens: different bytes,
