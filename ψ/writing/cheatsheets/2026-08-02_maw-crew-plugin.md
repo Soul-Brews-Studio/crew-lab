@@ -120,6 +120,37 @@ maw hey 46-maw-crew "proposal from crew-lab: ..."   # ✓
 maw hey 46-maw-crew "[proposal] ..."                # ❌ reserved
 ```
 
+## 🪟 7. อยาก 2 pane ซ้าย-ขวา — ห้าม join, ให้ split ข้างใน
+
+**กฎเหล็ก**: ชื่อ window = กุญแจที่ maw ใช้หาตัว agent
+`liveModel()` → `maw peek "${session}:${window}"` โดย window = `basename(worktree)` (crew.ts:131,378)
+`maw hey` ก็ใช้ `session:window` แล้วส่งเข้า **active pane**
+
+```bash
+S=crewdiggerlabc108021621; W=diggerlab-c108021621-buddy
+
+# ✅ split ข้างใน window เดิม — ชื่อ window ยังอยู่
+maw split "${S}:${W}"
+
+# ✅ ต้องดัน agent เป็น active pane ไม่งั้น maw hey ตกใส่ zsh
+AGENT_ID=$(tmux list-panes -t "${S}:${W}" -F "#{pane_index} #{pane_id} #{pane_current_command}" | rg node | cut -d' ' -f2)
+tmux select-pane -t "$AGENT_ID"
+
+# gate 2 ชั้น
+maw crew status diggerlab              # MODEL ต้องไม่ใช่ "-"
+maw peek "${S}:${W}" | tail -20        # ต้องเห็นข้อความจริงในตัว agent
+```
+
+```bash
+# ❌ ห้าม — join ทำลายชื่อ window → maw hey ตกผิด pane + status MODEL = "-"
+maw join "${S}:${W}" --to "${S}:lead"
+
+# ❌ ห้าม — break-pane ไม่ระบุ -t ไปโผล่ session ที่ attach อยู่ (session ของ oracle เอง!)
+tmux break-pane -s %7203 -n "$W"
+```
+
+**ทำไมพังเงียบ**: หน้าจอยังดูถูก (2 pane ซ้ายขวา) แต่ maw ทุก verb หา agent ไม่เจอแล้ว
+
 ## ⚡ ลัด
 
 | ทำอะไร | คำสั่ง |
@@ -147,6 +178,12 @@ maw hey 46-maw-crew "[proposal] ..."                # ❌ reserved
 | README ที่ชี้ไป repo อื่น เน่าภายใน 1 ชม. หลัง repo นั้นเปลี่ยน | ขอให้เขาเปลี่ยนอะไร = pointer ของเราถูกตั้งเวลาหมดอายุแล้ว |
 | `git branch -D` ถูก hook บล็อก | `git update-ref -d refs/heads/<branch>` |
 | `maw hey` ขึ้นต้น `[...]` ถูกปฏิเสธ | อย่าใช้ bracket นำ |
+| `$S:lead` ใน zsh → `$S:l` = modifier ตัวพิมพ์เล็ก กลายเป็น `...ead` | ใช้ `${S}:lead` เสมอ (วงเล็บปีกกา) |
+| `maw join` เข้า lead → status MODEL = `-` + hey ตกใส่ zsh | `maw split "${S}:${W}"` แทน — อย่าทำลายชื่อ window |
+| `tmux break-pane` ไม่ระบุ `-t` → window ไปโผล่ session ที่ attach อยู่ | ระบุ target ตรงๆ ทุกครั้ง หรืออย่าใช้ raw tmux เลย |
+| `tmux ...-t "${S}:win.pane"` เงียบ ไม่ทำงาน | ใช้ `#{pane_id}` (`%7215`) แทน index |
+| maw hey warning "not an agent" เตือนทั้งตอนส่งผิด (zsh) และส่งถูก (node) | warning นี้แยกแยะไม่ได้ — `maw peek` ดูของจริงเสมอ |
+| `maw crew up` ขึ้น "spawn reported failure" | ปกติ — false negative, plugin poll ต่อเอง (maw-rs#751) |
 
 ---
 
